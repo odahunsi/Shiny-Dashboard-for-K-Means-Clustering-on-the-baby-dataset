@@ -1,0 +1,248 @@
+#Shiny Dashboard Codes in R
+#
+# This Shiny dashboard is designed to present results of K-means clustering 
+# with the baby dataset
+#
+# This dashboard works with cleaned and normalized baby dataset 
+# (baby_cluster_scaled.csv). The data should be saved in the same directory
+# as the shiny dashboard app.
+#   
+# 
+# Author: Oluwatobi A. Dahunsi
+# M.Sc. Data Science,
+# University of Salford
+# @00643420
+
+library(shinydashboard)
+library(shiny)
+library(ggplot2)
+library(dplyr)
+library(cluster)
+library(factoextra)
+library(tidyr)
+
+
+baby_cluster_scaled <- read.csv("baby_cluster_scaled.csv")
+
+ui <- dashboardPage(skin = "yellow",
+  dashboardHeader(title = "K-Means Clustering with Baby Dataset", titleWidth = 450),
+  
+  ## Sidebar Menu
+  dashboardSidebar(
+    sidebarMenu(
+      sidebarSearchForm(textId = "SearchText", buttonId = "SearchButton",
+                        label = "Enter a keyword"),
+      menuItem("Cluster Relationships", tabName = "Cluster_Relationships", icon = icon("dashboard")),
+      menuItem("Observations", tabName = "Observations", icon = icon("dashboard")),
+      menuItem("Cluster Groups", tabName = "Cluster_Groups", icon = icon("dashboard")),
+      menuItem("Cluster Variability", tabName = "Cluster_Var", icon = icon("dashboard"))
+    )
+  ),
+  
+  
+  ## Body content
+  dashboardBody(
+    tabItems(
+      
+      # First Menu content
+      tabItem(tabName = "Cluster_Relationships",
+              fluidRow(
+                box(title = "Cluster Relationships among the variables", 
+                    solidHeader = TRUE, width = 12, status = "primary", 
+                    background = "light-blue")
+              ),
+              fluidRow(
+                box(
+                  title = "Cluster between birtweight & Gestation", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot1")
+                  ),
+
+                box(
+                  title = "Cluster between birtweight & Age", status = "warning",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot2")
+                  )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Cluster between birtweight & Height", status = "success",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot3")
+                ),
+
+                box(
+                  title = "Cluster between birtweight & Weight", status = "info",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot4")
+                  )
+                ),
+              
+              fluidRow(
+                box(
+                  title = "Cluster between Gestation & Age", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot5")
+                ),
+                
+                box(
+                  title = "Cluster between Gestation & Height", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot6")
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Cluster between Gestation & Weight", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot7")
+                ),
+                
+                box(
+                  title = "Cluster between Age & Height", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot8")
+                )
+              ),
+              
+              fluidRow(
+                box(
+                  title = "Cluster between Age & Weight", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot9")
+                ),
+
+                box(
+                  title = "Cluster between Height & Weight", status = "primary",
+                  solidHeader = T, collapsible = TRUE,
+                  plotOutput("Plot10")
+                )
+              )
+      ),
+      
+      # Second Menu content
+      tabItem(tabName = "Observations",
+              fluidRow(
+                box(title = "Silhouette Score", status = "primary",
+                    solidHeader = T, collapsible = TRUE,
+                    plotOutput("silPlot", height = 313, width = 412)),
+                
+                box(title = "Cluster Distribution", status = "primary",
+                    solidHeader = TRUE, collapsible = TRUE,
+                    plotOutput("obsPlot", height = 313, width = 412))
+              )
+      ),
+      
+      # Third Menu content
+      tabItem(tabName = "Cluster_Groups",
+              fluidRow(
+                box(title = "Cluster pair among variables", status = "primary",
+                    solidHeader = TRUE, collapsible = FALSE, width = 12,
+                    plotOutput("clusterGroups", height = 585, width = 800)
+                    )
+                )
+              ),
+      
+      # Fourth Menu content
+      tabItem(tabName = "Cluster_Var",
+              fluidRow(
+                box(title = "Cluster point variation", status = "primary",
+                    solidHeader = T, collapsible = TRUE,
+                    plotOutput("clusVar1")),
+                box(title = "Cluster point variation", status = "primary",
+                    solidHeader = T, collapsible = TRUE,
+                    plotOutput("clusVar2"))
+              )
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  output$searchText <- renderText({
+    input$searchButton
+    })
+  
+  output$Plot1 <- renderPlot({
+    plot(bwt ~ gestation, data = baby_cluster_scaled)
+  })
+  
+  output$Plot2 <- renderPlot({
+    plot(bwt ~ age, data = baby_cluster_scaled)
+  })
+  
+  output$Plot3 <- renderPlot({
+    plot(bwt ~ height, data = baby_cluster_scaled)
+  })
+  
+  output$Plot4 <- renderPlot({
+    plot(bwt ~ weight, data = baby_cluster_scaled)
+  })
+  
+  output$Plot5 <- renderPlot({
+    plot(gestation ~ age, data = baby_cluster_scaled)
+  })
+  
+  output$Plot6 <- renderPlot({
+    plot(gestation ~ height, data = baby_cluster_scaled)
+  })
+  
+  output$Plot7 <- renderPlot({
+    plot(gestation ~ weight, data = baby_cluster_scaled)
+  })
+  
+  output$Plot8 <- renderPlot({
+    plot(age ~ height, data = baby_cluster_scaled)
+  })
+  
+  output$Plot9 <- renderPlot({
+    plot(age ~ weight, data = baby_cluster_scaled)
+  })
+  
+  output$Plot10 <- renderPlot({
+    plot(height ~ weight, data = baby_cluster_scaled)
+  })
+  
+  output$silPlot <- renderPlot({
+    fviz_nbclust(baby_cluster_scaled, kmeans, method = 'silhouette')
+  })
+  
+  output$obsPlot <- renderPlot({
+    cluster_table <- table(Cluster_results$cluster)
+    
+    
+    barplot(c(cluster_table[1], cluster_table[2]),
+            names.arg = c("Cluster 1", "Cluster 2"),
+            xlab = "Label",
+            ylab = "Frequency",
+            col = rainbow(4))
+    
+ #   df <- data.frame(Cluster=c("Cluster 1", "Cluster 2"),
+  #                   proportion=c(cluster_table[1], cluster_table[2]), row.names = NULL)
+   # df %>%
+    #  ggplot(aes(x = as.factor(Cluster), y = proportion)) +
+     # geom_bar(stat = "identity") +
+     # ylab("Frequency") + xlab("Label") +theme_bw() + ggtitle("Observations per cluster")
+  })
+  
+  output$clusterGroups <- renderPlot({
+    pairs(baby_cluster_scaled, col = Cluster_results$cluster)
+  })
+  
+  output$clusVar1 <- renderPlot({
+    fviz_cluster(Cluster_results, baby_cluster_scaled)
+  })
+  
+  output$clusVar2 <- renderPlot({
+    clusplot(baby_cluster_scaled, Cluster_results$cluster, 
+             color = TRUE, shade = TRUE, lines = 0)
+  })
+  
+  
+  
+}
+shinyApp(ui, server)
+
